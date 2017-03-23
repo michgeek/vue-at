@@ -1,6 +1,6 @@
 <template>
     <div id="app">
-        <at :members="members" nameKey="name">
+        <at :members="members" nameKey="name" v-model="model">
             <!-- custom: same as default slot -->
             <!-- <template slot="item" scope="s">
               <span v-text="s.item"></span>
@@ -11,11 +11,14 @@
                 <img :src="s.item.avatar">
                 <span v-text="s.item.name"></span>
             </template>
-
-            <div class="editor"
-                 contenteditable
-                 v-html="html"></div>
+            <template slot="mention" scope="s">
+                <strong v-text="'@'+s.item.name"></strong>
+            </template>
         </at>
+
+        <pre>
+        {{ model }}
+        </pre>
     </div>
 </template>
 
@@ -47,9 +50,7 @@
         data () {
             return {
                 members,
-                html: `
-        <div>Awesome Electron&nbsp;<img src="static/awesome.svg"></div><div><img src="static/electron.svg"></div><div>Useful resources for creating apps with&nbsp;Electron</div><div>Inspired by the&nbsp;awesome&nbsp;list thing. You might also like&nbsp;awesome-nodejs.</div><div>Example apps</div><div>Some good apps written with Electron.</div><div>Open Source</div><div>Atom&nbsp;- Code editor.</div><div>Nuclide&nbsp;- Unified IDE.</div><div>Playback&nbsp;- Video player.</div>
-      `.trim() // fix trailing abnormal nodes
+                model: 'Hello world' // fix trailing abnormal nodes
             }
         }
     }

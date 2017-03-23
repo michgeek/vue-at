@@ -1,12 +1,7 @@
 <style lang="scss" src="./At.scss"></style>
 
 <template>
-    <div ref="wrap" class="atwho-wrap"
-         @compositionstart="handleCompositionStart"
-         @compositionend="handleCompositionEnd"
-         @input="handleInput"
-         @keydown="handleKeyDown"
-    >
+    <div ref="wrap" class="atwho-wrap">
         <div v-if="atwho" class="atwho-panel" :style="style">
             <div class="atwho-inner">
                 <div class="atwho-view">
@@ -26,7 +21,14 @@
                 </div>
             </div>
         </div>
-        <slot></slot>
+        <div class="atwho-input"
+             contenteditable
+             @compositionstart="handleCompositionStart"
+             @compositionend="handleCompositionEnd"
+             @input="handleInput"
+             @keydown="handleKeyDown"
+             v-text="value">
+        </div>
     </div>
 </template>
 
@@ -34,57 +36,63 @@
     import {
         closest, getOffset, getPrecedingRange,
         getRange, applyRange
-    } from './util'
+    } from './util';
+
+    import compiler from 'vue-template-compiler';
 
     export default {
-        name : 'At',
-        props: {
+        name    : 'At',
+        props   : {
+            value      : {type: String, required: true},
             at         : {type: String, default: '@'},
             avoidEmail : {type: Boolean, default: true},
             members    : {type: Array, default: []},
             nameKey    : {type: String, default: ''},
             filterMatch: {
                 type   : Function,
-                default: (name, chunk) => { // match at lower-case
-                    return name.toLowerCase().indexOf(chunk.toLowerCase()) > -1;
-                }
+                default: (name, chunk) => name.toLowerCase().indexOf(chunk.toLowerCase()) > -1
             },
             deleteMatch: {
                 type   : Function,
                 default: (name, chunk) => name === chunk
             }
         },
-
         data () {
             return {
                 hasComposition: false,
                 atwho         : null
-            }
+            };
         },
         computed: {
             style () {
                 if (this.atwho) {
-                    const {list, cur, x, y} = this.atwho
-                    const {wrap} = this.$refs
+                    const {x, y} = this.atwho;
+                    const {wrap} = this.$refs;
                     if (wrap) {
-                        const offset = getOffset(wrap)
-                        const left = x - offset.left + 'px'
-                        const top = y - offset.top + 'px'
-                        return {left, top}
+                        const offset = getOffset(wrap);
+                        const left = x - offset.left + 'px';
+                        const top = y - offset.top + 'px';
+                        return {left, top};
                     }
                 }
-                return null
+                return null;
             }
         },
         methods : {
             itemName (v) {
                 const {nameKey} = this;
-                return nameKey ? v[nameKey] : v;
+                return nameKey && v ? v[nameKey] : v;
             },
             isCur (index) {
                 return index === this.atwho.cur;
             },
+            getInput() {
+                if (this.$el) {
+                    return this.$el.getElementsByClassName("atwho-input")[0].textContent;
+                }
 
+                return this.value;
+            },
             handleItemClick () {
                 this.selectItem();
             },
@@ -104,10 +112,8 @@
                     const index = text.lastIndexOf(at);
                     if (index > -1) {
                         const chunk = text.slice(index + 1, -1);
-                        const has = members.some(v => {
-                            const name = itemName(v);
-                            return deleteMatch(name, chunk);
-                        })
+                        const has = members.some((v) => deleteMatch(itemName(v), chunk));
+
                         if (has) {
                             e.preventDefault();
                             e.stopPropagation();
@@ -120,6 +126,8 @@
                         }
                     }
                 }
+
+                this.$emit('input', this.getInput());
             },
             handleKeyDown (e) {
                 const {atwho} = this;
@@ -206,6 +214,8 @@
                             this.closePanel();
                         }
                     }
+
+                    this.$emit('input', this.getInput());
                 }
             },
             closePanel () {
